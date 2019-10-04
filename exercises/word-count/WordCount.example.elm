@@ -1,22 +1,26 @@
 module WordCount exposing (wordCount)
 
 import Dict exposing (Dict)
-import Regex
-import String
 
 
 wordCount : String -> Dict String Int
 wordCount sentence =
-    sentence
+    depunctuate sentence
         |> String.toLower
-        |> depunctuate
         |> String.words
         |> List.foldl (\w d -> Dict.update w incrMaybe d) Dict.empty
 
 
 depunctuate : String -> String
 depunctuate =
-    Regex.replace (Maybe.withDefault Regex.never <| Regex.fromString "[^a-z0-9 ]") (\_ -> "")
+    String.map
+        (\char ->
+            if Char.isAlphaNum char then
+                char
+
+            else
+                ' '
+        )
 
 
 incrMaybe : Maybe Int -> Maybe Int
