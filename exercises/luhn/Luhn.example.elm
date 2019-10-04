@@ -1,7 +1,6 @@
 module Luhn exposing (valid)
 
 import Char exposing (isDigit)
-import Regex exposing (Regex)
 import String
 
 
@@ -9,9 +8,7 @@ valid : String -> Bool
 valid input =
     let
         nonDigit =
-            Regex.contains
-                (Maybe.withDefault Regex.never <| Regex.fromString "[^0-9 ]")
-                input
+            String.any (\c -> not (c == ' ' || Char.isDigit c)) input
 
         tooShort =
             String.length digits < 2
