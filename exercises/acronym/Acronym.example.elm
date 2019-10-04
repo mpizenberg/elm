@@ -1,28 +1,24 @@
 module Acronym exposing (abbreviate)
 
-import Regex exposing (Regex)
-import String
-
 
 abbreviate : String -> String
 abbreviate phrase =
-    phrase
-        |> Regex.split dashOrSpace
-        |> List.map firstLetter
+    normalize phrase
+        -- Split the string
+        |> String.words
+        -- Retrieve the first character of each word
+        |> List.map (String.left 1)
+        -- Join all first characters
         |> String.join ""
 
 
-firstLetter : String -> String
-firstLetter word =
-    case String.uncons word of
-        Just ( letter, _ ) ->
-            String.toUpper <| String.fromChar letter
-
-        Nothing ->
-            ""
-
-
-dashOrSpace : Regex
-dashOrSpace =
-    Maybe.withDefault Regex.never <|
-        Regex.fromString "[ -]"
+{-| Replace '.', '-' and '\_' by spaces and change to upper case.
+-}
+normalize : String -> String
+normalize phrase =
+    phrase
+        |> String.replace "." " "
+        |> String.replace "-" " "
+        |> String.replace "_" " "
+        |> String.toUpper
+        |> String.trim
