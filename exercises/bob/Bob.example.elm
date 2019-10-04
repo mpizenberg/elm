@@ -1,8 +1,5 @@
 module Bob exposing (hey)
 
-import Regex
-import String
-
 
 hey : String -> String
 hey remark =
@@ -43,13 +40,7 @@ isQuestion remark =
 
 hasCharacters : String -> Bool
 hasCharacters remark =
-    Regex.contains characterRegex remark
-
-
-characterRegex : Regex.Regex
-characterRegex =
-    Regex.fromString "[a-zA-Z]"
-        |> Maybe.withDefault Regex.never
+    String.any Char.isAlpha remark
 
 
 isSilence : String -> Bool
