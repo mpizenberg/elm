@@ -2,7 +2,6 @@ module AtbashCipher exposing (decode, encode)
 
 import Char
 import Dict
-import Regex exposing (Regex)
 import String
 import Tuple
 
@@ -17,7 +16,8 @@ encode plain =
         |> String.toLower
         |> String.filter (\c -> Char.isLower c || Char.isDigit c)
         |> String.map translate
-        |> insertEvery 5 " "
+        |> groupBy 5
+        |> String.join " "
 
 
 decode : String -> String
@@ -55,15 +55,16 @@ toTranslator from to =
     translate
 
 
-insertEvery : Int -> String -> String -> String
-insertEvery size insertion string =
-    let
-        sizeRegex =
-            ".{" ++ String.fromInt size ++ "}(?!$)"
-    in
-    case Regex.fromString sizeRegex of
-        Nothing ->
-            string
+groupBy : Int -> String -> List String
+groupBy n string =
+    case splitAt n string of
+        ( start, "" ) ->
+            [ start ]
 
-        Just regex ->
-            Regex.replace regex (\{ match } -> match ++ insertion) string
+        ( start, end ) ->
+            start :: groupBy n end
+
+
+splitAt : Int -> String -> ( String, String )
+splitAt n string =
+    ( String.left n string, String.dropLeft n string )
