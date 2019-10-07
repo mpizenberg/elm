@@ -1,75 +1,67 @@
 module RunLengthEncoding exposing (decode, encode)
 
-import List exposing (head, tail)
-import Maybe exposing (withDefault)
-import Regex exposing (Regex)
-import String exposing (fromChar)
-
-
-
-{-
-   To the unaware: this was written by a very green elmer, so don't consider
-   it an idiomatic exemplar to emulate.
--}
+-- Encode
 
 
 encode : String -> String
-encode string =
-    String.toList string
-        |> List.foldr countChars []
-        |> List.map stringifyCounts
-        |> String.join ""
+encode input =
+    String.foldr encodeAccum ( 0, ' ', [] ) input
+        |> (\( count, lastChar, groups ) -> String.concat (encodeGroup count lastChar :: groups))
 
 
-countChars : a -> List ( number, a ) -> List ( number, a )
-countChars current counted =
-    case head counted of
-        Just ( count, previous ) ->
-            if previous == current then
-                ( count + 1, current ) :: withDefault [] (tail counted)
-
-            else
-                ( 1, current ) :: counted
-
-        Nothing ->
-            [ ( 1, current ) ]
-
-
-stringifyCounts : ( Int, Char ) -> String
-stringifyCounts ( count, char ) =
-    if count > 1 then
-        String.fromInt count ++ fromChar char
+encodeAccum : Char -> ( Int, Char, List String ) -> ( Int, Char, List String )
+encodeAccum c ( count, lastChar, encodedSoFar ) =
+    if c == lastChar then
+        ( count + 1, lastChar, encodedSoFar )
 
     else
-        fromChar char
+        ( 1, c, encodeGroup count lastChar :: encodedSoFar )
+
+
+encodeGroup : Int -> Char -> String
+encodeGroup count c =
+    if count == 0 then
+        ""
+
+    else if count == 1 then
+        String.fromChar c
+
+    else
+        String.fromInt count ++ String.fromChar c
+
+
+
+-- Decode
 
 
 decode : String -> String
-decode string =
-    string
-        |> Regex.find (regex "(\\d+)|(\\D)")
-        |> List.map .match
-        |> List.foldl expandCounts ( "", Nothing )
-        |> Tuple.first
+decode input =
+    String.foldl decodeAccum ( 0, [] ) input
+        |> (\( _, decodedSoFar ) -> String.concat decodedSoFar)
+        |> String.reverse
 
 
-expandCounts : String -> ( String, Maybe Int ) -> ( String, Maybe Int )
-expandCounts match ( result, count ) =
-    case count of
-        Just number ->
-            ( result ++ String.repeat number match, Nothing )
+decodeAccum : Char -> ( Int, List String ) -> ( Int, List String )
+decodeAccum c ( count, decodedSoFar ) =
+    if Char.isDigit c then
+        ( incrementCount c count, decodedSoFar )
 
-        Nothing ->
-            case String.toInt match of
-                Just number ->
-                    ( result, Just number )
-
-                Nothing ->
-                    ( result ++ match, Nothing )
+    else
+        ( 0, decodeGroup count c :: decodedSoFar )
 
 
-regex : String -> Regex
-regex string =
-    string
-        |> Regex.fromString
-        |> Maybe.withDefault Regex.never
+incrementCount : Char -> Int -> Int
+incrementCount c count =
+    String.fromChar c
+        |> String.toInt
+        |> Maybe.map (\n -> 10 * count + n)
+        |> Maybe.withDefault count
+
+
+decodeGroup : Int -> Char -> String
+decodeGroup count c =
+    if count == 0 then
+        String.fromChar c
+
+    else
+        String.repeat count (String.fromChar c)
